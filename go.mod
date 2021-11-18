@@ -1,4 +1,4 @@
-module github.com/mattrobenolt/go-randid
+module go.withmatt.com/randid
 
 go 1.17
 

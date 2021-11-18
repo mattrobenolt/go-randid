@@ -1,7 +1,7 @@
 # randid
 
 ```go
-import "github.com/mattrobenolt/go-randid"
+import "go.withmatt.com/randid"
 
 id := randid.New().String()
 ```
@@ -24,7 +24,7 @@ randid: cKTij4eSRWmIFgydqgi_Ww
 ```
 goos: linux
 goarch: amd64
-pkg: github.com/mattrobenolt/go-randid
+pkg: go.withmatt.com/randid
 cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
 BenchmarkNew
 BenchmarkNew-8                   1462352               827.4 ns/op            16 B/op          1 allocs/op
