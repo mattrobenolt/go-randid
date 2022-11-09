@@ -1,8 +1,9 @@
 package randid
 
 import (
-	"crypto/rand"
+	"math/rand"
 	"sync"
+	"time"
 )
 
 // Size is the length in bytes of the ID
@@ -14,43 +15,11 @@ const StringLen = 22
 // ID is our 16 byte random value
 type ID [Size]byte
 
-// hook for tests to stub in a predictable random
-var randReader = rand.Read
-
-const (
-	idsPerPage = 16
-	pageSize   = Size * idsPerPage
-)
-
-type page struct {
-	cursor int
-	b      [pageSize]byte
-}
-
-func (p *page) read(dst []byte) error {
-	if p.cursor == pageSize {
-		if _, err := randReader(p.b[:]); err != nil {
-			return err
-		}
-		p.cursor = 0
-	}
-
-	copy(dst, p.b[p.cursor:p.cursor+Size])
-	p.cursor += Size
-	return nil
-}
-
-// a pool for random id pages so that we
-// can use concurrency without synchronization.
-// if there is a single page buffer, it would require
-// a mutex to read from, but this effectively allows
-// 1 page buffer per thread.
-var pagePool = sync.Pool{
+// Maintain a pool of rand readers, since these are not safe for
+// concurrent use and avoid using a single with a mutex.
+var randPool = sync.Pool{
 	New: func() interface{} {
-		return &page{
-			cursor: pageSize,
-			b:      [pageSize]byte{},
-		}
+		return rand.New(rand.NewSource(time.Now().UnixNano()))
 	},
 }
 
@@ -61,13 +30,37 @@ func (id ID) String() string {
 	return string(buf[:])
 }
 
+var randReader = func() (int64, int64) {
+	r := randPool.Get().(*rand.Rand)
+	defer randPool.Put(r)
+	return r.Int63(), r.Int63()
+}
+
 // New generates a new random ID
 func New() (id ID) {
-	p := pagePool.Get().(*page)
-	defer pagePool.Put(p)
-	if err := p.read(id[:]); err != nil {
-		panic(err)
-	}
+	i, j := randReader()
+
+	// reading needs to fill up 16 bytes, or 128 bits of data
+	// this means we need to generate 2 x int64s, and put each int64 into 8 bytes
+
+	// hand unrolling since it's not a ton
+	id[0] = byte(i)
+	id[1] = byte(i >> 8)
+	id[2] = byte(i >> 16)
+	id[3] = byte(i >> 24)
+	id[4] = byte(i >> 32)
+	id[5] = byte(i >> 40)
+	id[6] = byte(i >> 48)
+	id[7] = byte(i >> 56)
+
+	id[8] = byte(j)
+	id[9] = byte(j >> 8)
+	id[10] = byte(j >> 16)
+	id[11] = byte(j >> 24)
+	id[12] = byte(j >> 32)
+	id[13] = byte(j >> 40)
+	id[14] = byte(j >> 48)
+	id[15] = byte(j >> 56)
 	return
 }
 
