@@ -26,16 +26,16 @@ goos: linux
 goarch: amd64
 pkg: go.withmatt.com/randid
 cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-BenchmarkNew
-BenchmarkNew-8                   1462352               827.4 ns/op            16 B/op          1 allocs/op
-BenchmarkUUIDNew
-BenchmarkUUIDNew-8               1458153               833.9 ns/op            16 B/op          1 allocs/op
-BenchmarkNewString
-BenchmarkNewString-8             1418264               842.0 ns/op            16 B/op          1 allocs/op
-BenchmarkUUIDNewString
-BenchmarkUUIDNewString-8         1370332               872.0 ns/op            64 B/op          2 allocs/op
+BenchmarkNew-8                       19509478          59.18 ns/op        0 B/op       0 allocs/op
+BenchmarkUUIDNew/NoPool-8             4156387         291.3 ns/op        16 B/op       1 allocs/op
+BenchmarkUUIDNew/Pool-8              18137985          65.17 ns/op        0 B/op       0 allocs/op
+BenchmarkNewString-8                 15435547          73.39 ns/op        0 B/op       0 allocs/op
+BenchmarkUUIDNewString/NoPool-8       3602911         331.4 ns/op        64 B/op       2 allocs/op
+BenchmarkUUIDNewString/Pool-8        11810478          99.93 ns/op       48 B/op       1 allocs/op
 ```
 
-As we can see, just the `New()` path in comparison to uuid4 is marginally faster, since we're not throwing away extra random bits.
+By default, `New()` uses a buffer pool to optimize reads. The uuid4 library has a toggle to enable or disable their pool for security purposes.
+
+To compare the two, `New()` beats out uuid4 with the pool turned on marginally, and drastically beats using without a pool.
 
 On the `New().String()` path, we gain a bit more performance and 1 less memory allocation, as well as a smaller allocation needed.

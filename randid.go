@@ -1,6 +1,9 @@
 package randid
 
-import "crypto/rand"
+import (
+	"crypto/rand"
+	"sync"
+)
 
 // Size is the length in bytes of the ID
 const Size = 16
@@ -14,6 +17,43 @@ type ID [Size]byte
 // hook for tests to stub in a predictable random
 var randReader = rand.Read
 
+const (
+	idsPerPage = 16
+	pageSize   = Size * idsPerPage
+)
+
+type page struct {
+	cursor int
+	b      [pageSize]byte
+}
+
+func (p *page) read(dst []byte) error {
+	if p.cursor == pageSize {
+		if _, err := randReader(p.b[:]); err != nil {
+			return err
+		}
+		p.cursor = 0
+	}
+
+	copy(dst, p.b[p.cursor:p.cursor+Size])
+	p.cursor += Size
+	return nil
+}
+
+// a pool for random id pages so that we
+// can use concurrency without synchronization.
+// if there is a single page buffer, it would require
+// a mutex to read from, but this effectively allows
+// 1 page buffer per thread.
+var pagePool = sync.Pool{
+	New: func() interface{} {
+		return &page{
+			cursor: pageSize,
+			b:      [pageSize]byte{},
+		}
+	},
+}
+
 // String returns base64 encoding of our ID
 func (id ID) String() string {
 	var buf [StringLen]byte
@@ -23,7 +63,9 @@ func (id ID) String() string {
 
 // New generates a new random ID
 func New() (id ID) {
-	if _, err := randReader(id[:]); err != nil {
+	p := pagePool.Get().(*page)
+	defer pagePool.Put(p)
+	if err := p.read(id[:]); err != nil {
 		panic(err)
 	}
 	return
