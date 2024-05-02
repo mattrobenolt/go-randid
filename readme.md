@@ -28,18 +28,47 @@ randid: cKTij4eSRWmIFgydqgi_Ww
 ### benchmarks
 
 ```
-goos: linux
-goarch: amd64
+goos: darwin
+goarch: arm64
 pkg: go.withmatt.com/randid
-cpu: 11th Gen Intel(R) Core(TM) i7-1165G7 @ 2.80GHz
-BenchmarkNew-8                       63667344          18.72 ns/op        0 B/op       0 allocs/op
-BenchmarkNewString-8                 31164199          39.19 ns/op        0 B/op       0 allocs/op
-BenchmarkUUIDNew/NoPool-8             3921735         301.0 ns/op        16 B/op       1 allocs/op
-BenchmarkUUIDNew/Pool-8              18226960          68.79 ns/op        0 B/op       0 allocs/op
-BenchmarkUUIDNewString/NoPool-8       3260712         373.1 ns/op        64 B/op       2 allocs/op
-BenchmarkUUIDNewString/Pool-8        11458695         103.7 ns/op        48 B/op       1 allocs/op
+BenchmarkNew
+BenchmarkNew-10            100000000            10.06 ns/op        0 B/op      0 allocs/op
+BenchmarkString
+BenchmarkString-10         121892878            9.857 ns/op        0 B/op      0 allocs/op
+BenchmarkNewString
+BenchmarkNewString-10       48996674            24.39 ns/op        0 B/op      0 allocs/op
+```
 
 ```
+$ benchstat uuid.txt randid.txt
+             │   uuid.txt   │             randid.txt              │
+             │    sec/op    │   sec/op     vs base                │
+New-10          46.99n ± 0%   10.05n ± 1%  -78.60% (p=0.000 n=10)
+String-10      34.435n ± 6%   9.839n ± 0%  -71.43% (p=0.000 n=10)
+NewString-10    75.98n ± 0%   24.56n ± 0%  -67.68% (p=0.000 n=10)
+geomean         49.72n        13.44n       -72.96%
+
+             │   uuid.txt   │               randid.txt                │
+             │     B/op     │    B/op     vs base                     │
+New-10         0.000 ± 0%     0.000 ± 0%         ~ (p=1.000 n=10) ¹
+String-10      48.00 ± 0%      0.00 ± 0%  -100.00% (p=0.000 n=10)
+NewString-10   48.00 ± 0%      0.00 ± 0%  -100.00% (p=0.000 n=10)
+geomean                   ²               ?                       ² ³
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+³ ratios must be >0 to compute geomean
+
+             │   uuid.txt   │               randid.txt                │
+             │  allocs/op   │ allocs/op   vs base                     │
+New-10         0.000 ± 0%     0.000 ± 0%         ~ (p=1.000 n=10) ¹
+String-10      1.000 ± 0%     0.000 ± 0%  -100.00% (p=0.000 n=10)
+NewString-10   1.000 ± 0%     0.000 ± 0%  -100.00% (p=0.000 n=10)
+geomean                   ²               ?                       ² ³
+¹ all samples are equal
+² summaries must be >0 to compute geomean
+³ ratios must be >0 to compute geomean
+```
+
 In general, our performance is significantly faster on all counts fundamentally by not using
 cryptographically secure randoms. Random bytes are generated as efficiently as possible, and focus
 is on avoiding allocations and unnecessary instructions.
