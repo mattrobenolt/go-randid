@@ -55,7 +55,7 @@ func New() ID {
 	}
 }
 
-// vendoringing in a bit simpler variant of base64 url encoding
+// vendoring in a bit simpler variant of base64 url encoding
 // that removes some extra branches and removes the concept of padding
 // We're working with a fixed size and fixed character set.
 var encodeMap = [64]byte{
