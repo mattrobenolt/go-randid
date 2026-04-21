@@ -1,6 +1,7 @@
 package randid
 
 import (
+	"encoding/base64"
 	"testing"
 )
 
@@ -22,6 +23,16 @@ func BenchmarkString(b *testing.B) {
 func BenchmarkNewString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = New().String()
+	}
+	b.ReportAllocs()
+}
+
+func BenchmarkEncodeStdlib(b *testing.B) {
+	id := New()
+	for i := 0; i < b.N; i++ {
+		src := id.Bytes()
+		var dst [StringLen]byte
+		base64.RawURLEncoding.Encode(dst[:], src[:])
 	}
 	b.ReportAllocs()
 }
@@ -106,6 +117,20 @@ func TestEncode(t *testing.T) {
 		}
 		if got != c.expected {
 			t.Errorf("Expected %v, got %v (%#v)", c.expected, got, c.id)
+		}
+	}
+}
+
+func TestEncodeMatchesStdlib(t *testing.T) {
+	for range 1024 {
+		id := New()
+		src := id.Bytes()
+
+		var want [StringLen]byte
+		base64.RawURLEncoding.Encode(want[:], src[:])
+
+		if got := id.String(); got != string(want[:]) {
+			t.Fatalf("stdlib mismatch: got %q want %q for %#v", got, string(want[:]), id)
 		}
 	}
 }

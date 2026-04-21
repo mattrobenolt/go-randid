@@ -66,65 +66,36 @@ var encodeMap = [64]byte{
 }
 
 func encodeUnrolled(dst *[StringLen]byte, src ID) {
-	// XXX: this is manually unrolled and performance is
-	// a few percentage faster, likely the only optimization
-	// that can be accomplished here is through ASM and utilizing
-	// vectors and probably encode this entire thing in one
-	// vector CPU instruction.
-	var val uint32
+	// Work directly from the two 64-bit words instead of repeatedly
+	// reconstructing 24-bit groups byte-by-byte.
+	lo := src[0]
+	hi := src[1]
 
-	// Convert 3x 8bit source bytes into 4 bytes
-	val = (uint32(byte(src[(0+0)/8]>>((0+0)%8*8)))<<16 |
-		uint32(byte(src[(0+1)/8]>>((0+1)%8*8)))<<8 |
-		uint32(byte(src[(0+2)/8]>>((0+2)%8*8)))<<0)
+	dst[0] = encodeMap[(lo>>2)&0x3F]
+	dst[1] = encodeMap[((lo&0x03)<<4)|((lo>>12)&0x0F)]
+	dst[2] = encodeMap[((lo>>6)&0x3C)|((lo>>22)&0x03)]
+	dst[3] = encodeMap[(lo>>16)&0x3F]
 
-	dst[0+0] = encodeMap[val>>18&0x3F]
-	dst[0+1] = encodeMap[val>>12&0x3F]
-	dst[0+2] = encodeMap[val>>6&0x3F]
-	dst[0+3] = encodeMap[val&0x3F]
+	dst[4] = encodeMap[(lo>>26)&0x3F]
+	dst[5] = encodeMap[((lo>>20)&0x30)|((lo>>36)&0x0F)]
+	dst[6] = encodeMap[((lo>>30)&0x3C)|((lo>>46)&0x03)]
+	dst[7] = encodeMap[(lo>>40)&0x3F]
 
-	// Convert 3x 8bit source bytes into 4 bytes
-	val = (uint32(byte(src[(3+0)/8]>>((3+0)%8*8)))<<16 |
-		uint32(byte(src[(3+1)/8]>>((3+1)%8*8)))<<8 |
-		uint32(byte(src[(3+2)/8]>>((3+2)%8*8)))<<0)
+	dst[8] = encodeMap[(lo>>50)&0x3F]
+	dst[9] = encodeMap[((lo>>48)&0x03)<<4|((lo>>60)&0x0F)]
+	dst[10] = encodeMap[((lo>>54)&0x3C)|((hi>>6)&0x03)]
+	dst[11] = encodeMap[hi&0x3F]
 
-	dst[4+0] = encodeMap[val>>18&0x3F]
-	dst[4+1] = encodeMap[val>>12&0x3F]
-	dst[4+2] = encodeMap[val>>6&0x3F]
-	dst[4+3] = encodeMap[val&0x3F]
+	dst[12] = encodeMap[(hi>>10)&0x3F]
+	dst[13] = encodeMap[((hi>>8)&0x03)<<4|((hi>>20)&0x0F)]
+	dst[14] = encodeMap[((hi>>14)&0x3C)|((hi>>30)&0x03)]
+	dst[15] = encodeMap[(hi>>24)&0x3F]
 
-	// Convert 3x 8bit source bytes into 4 bytes
-	val = (uint32(byte(src[(6+0)/8]>>((6+0)%8*8)))<<16 |
-		uint32(byte(src[(6+1)/8]>>((6+1)%8*8)))<<8 |
-		uint32(byte(src[(6+2)/8]>>((6+2)%8*8)))<<0)
+	dst[16] = encodeMap[(hi>>34)&0x3F]
+	dst[17] = encodeMap[((hi>>32)&0x03)<<4|((hi>>44)&0x0F)]
+	dst[18] = encodeMap[((hi>>38)&0x3C)|((hi>>54)&0x03)]
+	dst[19] = encodeMap[(hi>>48)&0x3F]
 
-	dst[8+0] = encodeMap[val>>18&0x3F]
-	dst[8+1] = encodeMap[val>>12&0x3F]
-	dst[8+2] = encodeMap[val>>6&0x3F]
-	dst[8+3] = encodeMap[val&0x3F]
-
-	// Convert 3x 8bit source bytes into 4 bytes
-	val = (uint32(byte(src[(9+0)/8]>>((9+0)%8*8)))<<16 |
-		uint32(byte(src[(9+1)/8]>>((9+1)%8*8)))<<8 |
-		uint32(byte(src[(9+2)/8]>>((9+2)%8*8)))<<0)
-
-	dst[12+0] = encodeMap[val>>18&0x3F]
-	dst[12+1] = encodeMap[val>>12&0x3F]
-	dst[12+2] = encodeMap[val>>6&0x3F]
-	dst[12+3] = encodeMap[val&0x3F]
-
-	// Convert 3x 8bit source bytes into 4 bytes
-	val = (uint32(byte(src[(12+0)/8]>>((12+0)%8*8)))<<16 |
-		uint32(byte(src[(12+1)/8]>>((12+1)%8*8)))<<8 |
-		uint32(byte(src[(12+2)/8]>>((12+2)%8*8)))<<0)
-
-	dst[16+0] = encodeMap[val>>18&0x3F]
-	dst[16+1] = encodeMap[val>>12&0x3F]
-	dst[16+2] = encodeMap[val>>6&0x3F]
-	dst[16+3] = encodeMap[val&0x3F]
-
-	// last byte
-	val = uint32(src[1]>>56) << 16
-	dst[20+0] = encodeMap[val>>18&0x3F]
-	dst[20+1] = encodeMap[val>>12&0x3F]
+	dst[20] = encodeMap[(hi>>58)&0x3F]
+	dst[21] = encodeMap[((hi>>56)&0x03)<<4]
 }
