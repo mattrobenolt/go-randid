@@ -27,6 +27,14 @@ func BenchmarkNewString(b *testing.B) {
 	b.ReportAllocs()
 }
 
+func BenchmarkBytes(b *testing.B) {
+	id := New()
+	for i := 0; i < b.N; i++ {
+		_ = id.Bytes()
+	}
+	b.ReportAllocs()
+}
+
 func BenchmarkEncodeStdlib(b *testing.B) {
 	id := New()
 	for i := 0; i < b.N; i++ {

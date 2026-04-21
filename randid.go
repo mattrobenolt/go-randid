@@ -15,27 +15,7 @@ const StringLen = 22
 type ID [2]uint64
 
 func (id ID) Bytes() [Size]byte {
-	var out [Size]byte
-
-	out[0] = byte(id[0])
-	out[1] = byte(id[0] >> 8)
-	out[2] = byte(id[0] >> 16)
-	out[3] = byte(id[0] >> 24)
-	out[4] = byte(id[0] >> 32)
-	out[5] = byte(id[0] >> 40)
-	out[6] = byte(id[0] >> 48)
-	out[7] = byte(id[0] >> 56)
-
-	out[8] = byte(id[1])
-	out[9] = byte(id[1] >> 8)
-	out[10] = byte(id[1] >> 16)
-	out[11] = byte(id[1] >> 24)
-	out[12] = byte(id[1] >> 32)
-	out[13] = byte(id[1] >> 40)
-	out[14] = byte(id[1] >> 48)
-	out[15] = byte(id[1] >> 56)
-
-	return out
+	return *(*[Size]byte)(unsafe.Pointer(&id))
 }
 
 // String returns base64 encoding of our ID
